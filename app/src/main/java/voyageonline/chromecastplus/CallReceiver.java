@@ -63,22 +63,11 @@ public class CallReceiver extends PhonecallReceiver implements GoogleApiClient.C
 
 		callback = new MediaRouter.Callback() {
 			@Override
-			public void onRouteSelected(MediaRouter router, MediaRouter.RouteInfo route) {
-				super.onRouteSelected(router, route);
+			public void onRouteSelected(MediaRouter r, MediaRouter.RouteInfo route) {
+				super.onRouteSelected(r, route);
 				CastDevice device = CastDevice.getFromBundle(route.getExtras());
 				if (device != null) {
-
-					Cast.CastOptions.Builder apiOptionsBuilder = new Cast.CastOptions
-							.Builder(device, new Cast.Listener() {
-
-					});
-
-					mApiClient = new GoogleApiClient.Builder(ctx)
-							.addApi(Cast.API, apiOptionsBuilder.build())
-							.addConnectionCallbacks(CallReceiver.this)
-							.addOnConnectionFailedListener(CallReceiver.this)
-							.build();
-					mApiClient.connect();
+					connectAndMute(device, ctx);
 				}
 			}
 
@@ -126,29 +115,24 @@ public class CallReceiver extends PhonecallReceiver implements GoogleApiClient.C
 						e.printStackTrace();
 					}
 				} else {
-					Cast.CastOptions.Builder apiOptionsBuilder = new Cast.CastOptions
-							.Builder(device, new Cast.Listener() {
-
-					});
-
-					mApiClient = new GoogleApiClient.Builder(ctx)
-							.addApi(Cast.API, apiOptionsBuilder.build())
-							.addConnectionCallbacks(CallReceiver.this)
-							.addOnConnectionFailedListener(CallReceiver.this)
-							.build();
-					mApiClient.connect();
+					connectAndMute(device, ctx);
 				}
 			}
 		}
 	}
 
-	private void unMuteCast(Context ctx) {
-		muteCast(ctx, false);
-	}
+	private void connectAndMute(CastDevice device, Context ctx) {
+		Cast.CastOptions.Builder apiOptionsBuilder = new Cast.CastOptions
+				.Builder(device, new Cast.Listener() {
 
+		});
 
-	@Override
-	public void onConnected(Bundle connectionHint) {
+		mApiClient = new GoogleApiClient.Builder(ctx)
+				.addApi(Cast.API, apiOptionsBuilder.build())
+				.addConnectionCallbacks(CallReceiver.this)
+				.addOnConnectionFailedListener(CallReceiver.this)
+				.build();
+		mApiClient.connect();
 		try {
 			Log.d("TAG", "muting from googld api client = " + mMute);
 			Cast.CastApi.setMute(mApiClient, mMute);
@@ -159,6 +143,16 @@ public class CallReceiver extends PhonecallReceiver implements GoogleApiClient.C
 		} catch (Exception e) {
 			Log.e("TAG", "Failed to mute cast", e);
 		}
+	}
+
+	private void unMuteCast(Context ctx) {
+		muteCast(ctx, false);
+	}
+
+
+	@Override
+	public void onConnected(Bundle connectionHint) {
+
 	}
 
 	@Override
